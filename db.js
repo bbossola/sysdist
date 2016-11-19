@@ -1,20 +1,22 @@
-var async = require('async');
-var rest = require('unirest');
-var http = require('http');
-
-var log_request = require('./logger.js').log_request;
-var execute_2pc = require('./api_2pc.js').submit;
-
 var database = {}
 
-exports.save = function(key, val) {
-		database[key] = val
+exports.save = function(key, val, callback) {
+    database[key] = val;
+    setTimeout(function() {
+        callback();
+    }, randomTime())
 }
 
-exports.load = function(key) {
-		return database[key]
+exports.load = function(key, callback) {
+    setTimeout(function() {
+        callback(database[key]);
+    }, randomTime())
 }
 
 exports.data = function(key) {
-		return database
+    return database;
+}
+
+var randomTime = function() {
+    return Math.floor(Math.random() * 2000)
 }
