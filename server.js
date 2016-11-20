@@ -14,7 +14,7 @@ app.use(function(req, res, next) {
 })
 
 var engine = require('./' + mode + "/init.js");
-engine.init(app);
+engine.init(app, port);
 
 api_store.init(engine)
 app.get("/admin/dump", api_store.dump);
