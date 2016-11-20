@@ -3,6 +3,7 @@ var express = require("express");
 var p2p = require('./p2p.js');
 var api_store = require('./api_store.js');
 
+var mode = (process.env.MODE == undefined ? "AP" : process.env.MODE)
 var port = (process.argv.length > 2) ? parseInt(process.argv[2], 10) : 3001
 
 var app = express();
@@ -12,7 +13,6 @@ app.use(function(req, res, next) {
     next();
 })
 
-var mode = (process.env.MODE == undefined ? "AP" : process.env.MODE)
 var engine = require('./' + mode + "/init.js");
 engine.init(app);
 

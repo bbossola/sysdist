@@ -10,7 +10,6 @@ exports.get = function(request, response) {
     log_request(request, "key=" + key + "...");
 
     store.load(key, function(err, val) {
-        console.log("store.load - val="+val+", err="+err)
         if (val != undefined) {
             response.status(200);
             response.json({

@@ -42,12 +42,12 @@ exports.sloppy_write = function(key, val, callback) {
 };
 
 exports.smart_read = function(key, callback) {
-    console.log('1. reading the data "' + key + '" with quorum of ' + read_quorum + ' from peers');
+    console.log('Reading the data "' + key + '" with quorum of ' + read_quorum + ' from peers');
     ask_with_quorum("read", create_tasks(key, read), read_quorum, function(err, responses) {;
         var result = get_agreed_result(responses);
         if (result.response && !callback.called) {
             value = valueof(result.response);
-            console.log("2. agreed value '" + value + "' based on " + responses.length + " responses");
+            console.log("Agreed value '" + value + "' based on " + responses.length + " responses");
             callback.called = true;
             callback(null, value);
         }
@@ -161,39 +161,59 @@ get_agreed_result = function(responses) {
         else if (response.statusCode == 404)
             not_found.push(response);
     }
-    console.log("- total 200s:", has_value.length);
-    console.log("- total 404s:", not_found.length);
 
-    var response = null;
     var disagreements = [];
+    var agreed_response = null;
     if (not_found.length >= read_quorum) {
         disagreements = has_value;
-        response = not_found[0];
+        agreed_response = not_found[0];
     } else if (has_value.length >= read_quorum) {
         disagreements = not_found;
 
         var results = {};
         for (var response of has_value) {
             value = response.body.val;
-            results[value] = response;
+            if (!results[value]) {
+                results[value] = {};
+                results[value].count = 1;
+                results[value].response = response;
+            } else {
+                results[value].count++;
+            }
+
+            if (results[value].count >= read_quorum && !agreed_response) {
+                console.log("We have an agreed response", JSON.stringify(response.body));
+                agreed_response = response;
+            }
         }
 
-        if (Object.keys(results).length > 1) {
-
+        var num_of_results = Object.keys(results).length;
+        if (num_of_results > 1) {
+            if (agreed_response) {
+                console.log("We have a disagreement: " + num_of_results + " different results!");
+                delete results[response.body.val];
+                Object.keys(results).forEach(function(key, index) {
+                    disagreements.push(results[key].response);
+                });
+            }
         }
     }
 
-    console.log("- value:", valueof(response));
-    console.log("- disagreements:", disagreements.length);
+    console.log("- total 200s:", has_value.length, agreed_response ? "" : "(inconclusive)");
+    console.log("- total 404s:", not_found.length);
+
     return {
-        response: response,
+        response: agreed_response,
         responses: responses,
         disagreements: disagreements
     };
 }
 
 process_disagreement = function(result) {
-    console.log('3. disagreements to process: ', result.disagreements.length);
+    if (result.disagreements.length == 0)
+        return;
+
+    console.log('\nDisagreements to process: ', result.disagreements.length);
     for (var disagreement of result.disagreements) {
         var port = disagreement.headers['x-sys-id'];
         var host = host_by_port(port);
@@ -206,9 +226,7 @@ process_disagreement = function(result) {
                 'Content-Type': 'application/json'
             })
             .send(JSON.stringify(body))
-            .end(function(response) {
-                console.log('- response:', response.statusCode)
-            });
+            .end();
     }
 }
 

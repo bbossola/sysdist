@@ -13,8 +13,6 @@ exports.init = function(localport) {
             })
         }
     }
-
-    console.log("Current peers: ", JSON.stringify(peers))
 };
 
 exports.peers = function() {

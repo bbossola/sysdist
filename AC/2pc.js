@@ -14,17 +14,17 @@ exports.submit = function(key, val, callback) {
     console.log('1. proposing to peers: ', JSON.stringify(tx));
     async.parallel(create_tasks_propose(tx), function(err, results) {
         console.log('2. proposal results:', JSON.stringify(results));
-        if (is_successful(results)) {
+        if (!has_error(results)) {
             console.log('3. sending commit to peers...');
             async.parallel(create_tasks_commit(tx), function(err, results) {
                 console.log('4. commit results:', JSON.stringify(results));
-                callback(is_successful(results))
+                callback(has_error(results))
             });
         }
         else {
             console.log('3. failure - sending rollback to peers');
             async.parallel(create_tasks_rollback(tx), function(err, results) {
-                callback(false)
+                callback("failure to contact all peers")
             });
         }
     });
@@ -75,13 +75,13 @@ create_tasks_rollback = function(tx) {
     return tasks;
 }
 
-is_successful = function(results) {
+has_error = function(results) {
     for (i = 0; i < results.length; i++) {
         if (results[i] != 200)
-            return false;
+            return "a peer failed";
     }
 
-    return true;
+    return undefined;
 }
 
 

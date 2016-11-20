@@ -8,13 +8,13 @@ exports.slowness = function(amount) {
 exports.save = function(key, val, callback) {
     database[key] = clone(val);
     setTimeout(function() {
-        callback();
+        callback(null);
     }, randomTime())
 }
 
 exports.load = function(key, callback) {
     setTimeout(function() {
-        callback(clone(database[key]));
+        callback(null, clone(database[key]));
     }, randomTime())
 }
 

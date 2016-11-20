@@ -75,7 +75,7 @@ exports.repair = function(request, response) {
 
 exports.read = function(request, response) {
     var key = request.params.key;
-    db.load(key, function(dbvalue) {
+    db.load(key, function(err, dbvalue) {
         log_request(request, "Read executed on db: " + JSON.stringify(dbvalue));
         if (dbvalue != undefined){
             dbvalue.key = key;
