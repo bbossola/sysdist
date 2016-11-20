@@ -13,7 +13,7 @@ exports.submit = function(key, val, callback) {
 
     console.log('1. proposing to peers: ', JSON.stringify(tx));
     async.parallel(create_tasks_propose(tx), function(err, results) {
-        console.log('2. propoosal results:', JSON.stringify(results));
+        console.log('2. proposal results:', JSON.stringify(results));
         if (is_successful(results)) {
             console.log('3. sending commit to peers...');
             async.parallel(create_tasks_commit(tx), function(err, results) {
