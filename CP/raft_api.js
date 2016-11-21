@@ -7,20 +7,20 @@ var log_request = require('../logger.js').log_request;
 var write_ahead_log = {}
 
 exports.vote_request = function(request, response) {
-    var from = request.headers['x-sys-id'];
+    var from = request.body.from;
+    var term = request.body.term;
 
-    var key = request.params.key;
-    db.load(key, function(err, dbvalue) {
-        log_request(request, "Read executed on db: " + JSON.stringify(dbvalue));
-        if (dbvalue != undefined){
-            dbvalue.key = key;
-            response.json(dbvalue).status(200).send();
-        } else {
-            response.status(404).send();
-        }
+    raft.handle_vote_request(from, term, function(err, yesno) {
+        var status = yesno ? 201 : 404;
+        response.status(status).end();
     });
 };
 
 exports.update = function(request, response) {
-    response.status(200).send();
+    var from = request.body.from;
+    var term = request.body.term;
+
+    raft.handle_update_request(from, term, function(err) {
+        response.status(200).end();
+    });
 }

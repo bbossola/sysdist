@@ -3,7 +3,7 @@ var express = require("express");
 var p2p = require('./p2p.js');
 var api_store = require('./api_store.js');
 
-var mode = (process.env.MODE == undefined ? "AP" : process.env.MODE)
+var mode = (process.env.MODE == undefined ? "CP" : process.env.MODE)
 var port = (process.argv.length > 2) ? parseInt(process.argv[2], 10) : 3001
 
 var app = express();
@@ -19,7 +19,7 @@ engine.init(app, port);
 api_store.init(engine)
 app.get("/admin/dump", api_store.dump);
 app.get("/admin/clean", function(request, response) {
-    for (var i=0; i<25; i++)
+    for (var i = 0; i < 25; i++)
         console.log("\n");
     response.status(200).end();
 });

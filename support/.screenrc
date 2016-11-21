@@ -21,8 +21,7 @@ screen -t cli  1 bash
 screen -t 3001  2 bash
 screen -t 3002  3 bash
 screen -t 3003  4 bash
-#screen -t Python  3 python
-#screen -t Media   4 bash
+screen -t 3004  5 bash
 select 0
 bind c screen 1 # window numbering starts at 1 not 0
 bind 0 select 10
@@ -37,26 +36,23 @@ layout new one
 select 1
 split
 
-layout new two
-select 1
-split
-focus down
-select 2
-split -v
-split -v
-split 
-focus right
-split 
-focus up
-
 layout new three
 select 1
 split
 focus down
 select 2
 split -v
+focus right
+select 3
 split -v
+focus right
+select 4
 focus up
+split -v
+resize -h +22
+focus right
+select 5
+focus left
 
 #focus right
 #select 4

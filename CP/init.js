@@ -5,8 +5,8 @@ exports.init = function(app, port) {
     raft.whoami(port);
 
     var raft_api = require('./raft_api.js');
-    app.get("/raft/vote", raft_api.vote_request);
-    app.get("/raft/update", raft_api.update);
+    app.post("/raft/update", raft_api.update);
+    app.post("/raft/voteforme", raft_api.vote_request);
 }
 
 exports.store = function(app) {
