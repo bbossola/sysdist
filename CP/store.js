@@ -1,6 +1,6 @@
 var db = require('../db.js');
 
-var publish = require('./rift.js').publish;
+var publish = require('./raft.js').publish;
 
 exports.save = function(key, val, callback) {
     publish(key, val, function(err) {

@@ -1,15 +1,14 @@
 exports.init = function(app, port) {
-    console.log("CP mode (majority quorum, rift)");
+    console.log("CP mode (majority quorum, raft)");
 
-    var rift = require('./rift.js');
-    rift.whoami(port);
-    
-    var rift_api = require('./rift_api.js');
-    app.get("/rift/vote", rift_api.vote_request);
-    app.get("/rift/update", rift_api.update);
+    var raft = require('./raft.js');
+    raft.whoami(port);
+
+    var raft_api = require('./raft_api.js');
+    app.get("/raft/vote", raft_api.vote_request);
+    app.get("/raft/update", raft_api.update);
 }
 
 exports.store = function(app) {
    return require('./store.js');
 }
-

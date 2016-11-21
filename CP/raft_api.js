@@ -1,5 +1,5 @@
 var db = require('../db.js');
-var rift = require('./rift.js');
+var raft = require('./raft.js');
 
 var valueof = require('./utils.js').valueof
 var log_request = require('../logger.js').log_request;
