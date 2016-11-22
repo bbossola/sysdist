@@ -1,9 +1,9 @@
 var db = require('../db.js');
 
-var publish_log = require('./raft.js').publish_log;
+var write = require('./raft.js').write;
 
 exports.save = function(key, val, callback) {
-    publish_log(key, val, function(err) {
+    write(key, val, function(err) {
         if (!err) {
             db.save(key, val, callback);
         } else {
