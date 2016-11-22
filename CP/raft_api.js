@@ -17,8 +17,14 @@ exports.vote_request = function(request, response) {
 };
 
 exports.update = function(request, response) {
-    console.log("- update:", JSON.stringify(request.body));
-    raft.handle_update_request(request.body, function(err) {
+    var update = request.body;
+    if (update.data) {
+        console.log("Update: "+JSON.stringify(update));
+    } else {
+        process.stdout.write("Update: "+JSON.stringify(update)+"\r");
+    }
+
+    raft.handle_update_request(update, function(err) {
         response.status(200).end();
     });
 }

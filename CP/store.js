@@ -3,9 +3,13 @@ var db = require('../db.js');
 var write = require('./raft.js').write;
 
 exports.save = function(key, val, callback) {
-    write(key, val, function(err) {
+    write(key, val, function(err, data) {
         if (!err) {
-            db.save(key, val, callback);
+            if (data) {
+                db.save(key, data, callback);
+            } else {
+                callback(null);
+            }
         } else {
             callback(err);
         }

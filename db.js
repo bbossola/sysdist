@@ -1,3 +1,5 @@
+var clone = require('./clone.js').clone;
+
 var database = {}
 
 var wait_time = 500;
@@ -20,10 +22,6 @@ exports.load = function(key, callback) {
 
 exports.data = function(key) {
     return database;
-}
-
-var clone = function(val) {
-	return !val ? undefined : JSON.parse(JSON.stringify(val));
 }
 
 var randomTime = function() {

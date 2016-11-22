@@ -1,8 +1,11 @@
 var async = require('async');
 var rest = require('unirest');
 var http = require('http');
+var db = require('../db.js');
 
+var clone = require('../clone.js').clone;
 var peers = require('../p2p.js').peers;
+var httpurl = require('../p2p.js').httpurl;
 
 var status = {
     to_s: '"<init>"'
@@ -17,10 +20,10 @@ var election_timeout = 0;
 
 var write_buffer = undefined;
 
-const DEFAULT_ELECTION_TIMEOUT = 5000;
+const DEFAULT_ELECTION_TIMEOUT = 2500;
 
 (function loop() {
-    var rand = Math.round(Math.random() * 2000) + 500;
+    var rand = Math.round(Math.random() * 100) + 100;
     setTimeout(function() {
         tick();
         status();
@@ -41,7 +44,9 @@ me_follower = function() {
     }
 };
 
-me_candidate = function() {};
+me_candidate = function() {
+
+};
 
 me_leader = function() {
     do_send_updates();
@@ -53,12 +58,20 @@ exports.whoami = function(port) {
 }
 
 exports.write = function(key, val, callback) {
-    if (write_buffer) {
-        callback("Too busy");
-        return;
+    if (status == me_leader) {
+        if (!write_buffer) {
+            write_buffer = {key: key, val: val, term: current_term, tick: current_tick, callback: callback};
+        } else {
+            callback("Too busy");
+        }
+    } else {
+        console.log("Forwarding write request of "+key+" to leader "+current_leader+" for value "+val)
+        var url = httpurl(current_leader)+"/database/"+key+"/"+val;
+        rest.post(url)
+            .end(function(response) {
+                callback((response.statusCode != 201) ? "error" : null);
+            });
     }
-
-    write_buffer = {key: key, val: val, callback: callback};
 }
 
 exports.handle_vote_request = function(from, term, callback) {
@@ -84,11 +97,11 @@ exports.handle_update_request = function(update, callback) {
     reset_election_timeout();
     if (status == me_candidate) {
         console.log("Ops! Somebody is already in charge, election attempt aborted :)")
-        switch_status(follower);
+        switch_status(me_follower);
         return;
     } else if (status == me_leader) {
         console.log("Ops! Two leaders here? Let's start an election!")
-        switch_status(candidate);
+        switch_status(me_candidate);
         return;
     }
 
@@ -100,7 +113,13 @@ exports.handle_update_request = function(update, callback) {
     current_tick = update.tick;
     current_term = update.term;
     current_leader = update.from;
-    callback();
+
+    if (update.data != null) {
+        data = {val: update.data.val, term: update.data.term, tick: update.data.tick}
+        db.save(update.data.key, data, callback);
+    } else {
+        callback();
+    }
 };
 
 do_request_votes = function(term) {
@@ -118,6 +137,7 @@ do_request_votes = function(term) {
         } else {
             console.log('- success!');
             current_tick = 0;
+            current_leader = myport;
             switch_status(me_leader);
         }
         reset_election_timeout()
@@ -135,7 +155,7 @@ create_vote_requests = function(votes) {
     var tasks = [];
     peers().forEach(function(peer) {
         tasks.push(function(callback) {
-            var url = "http://" + peer.host + ":" + peer.port + "/raft/voteforme";
+            var url = httpurl(peer.port) + "/raft/voteforme";
             rest.post(url)
                 .headers({
                     'Content-Type': 'application/json'
@@ -153,23 +173,29 @@ create_vote_requests = function(votes) {
 }
 
 do_send_updates = function() {
-    console.log('Sending updates to the crowd - term=' + current_term + ", tick=" + current_tick);
-    async.parallel(create_updates(), function(err) {
-        
+    var buffer = write_buffer;
+    write_buffer = null;
+
+    process.stdout.write('LEADER - updating for term=' + current_term + ', tick=' + current_tick + ', data=' + JSON.stringify(buffer) + '\r');
+    async.parallel(create_updates(buffer), function(err) {
+        if (buffer) {
+            data = {val: buffer.val, term: buffer.term, tick: buffer.tick};
+            buffer.callback(null, data);
+        }
     });
 };
 
-create_updates = function() {
+create_updates = function(buffer) {
     var update = {
         from: myport,
         term: current_term,
         tick: current_tick,
-        data: write_buffer
+        data: buffer
     };
     var tasks = [];
     peers().forEach(function(peer) {
         tasks.push(function(callback) {
-            var url = "http://" + peer.host + ":" + peer.port + "/raft/update";
+            var url = httpurl(peer.port) + "/raft/update";
             rest.post(url)
                 .headers({
                     'Content-Type': 'application/json'
@@ -206,7 +232,7 @@ me_follower.to_s = '"follower"';
 me_candidate.to_s = '"candidate"';
 
 switch_status = function(new_status) {
-    console.log("Switching from " + status.to_s + " to " + new_status.to_s);
+    console.log("Switching from " + status.to_s + " to " + new_status.to_s+"\n");
     status = new_status;
     reset_election_timeout();
 }
