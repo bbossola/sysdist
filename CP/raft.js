@@ -1,10 +1,11 @@
+var timeout = require('async-timeout');
 var async = require('async');
 var rest = require('unirest');
 var http = require('http');
+var p2p = require('../p2p.js');
 var db = require('../db.js');
 
 var clone = require('../clone.js').clone;
-var peers = require('../p2p.js').peers;
 var httpurl = require('../p2p.js').httpurl;
 
 var status = {
@@ -20,10 +21,11 @@ var election_timeout = 0;
 
 var write_buffer = undefined;
 
+const DEFAULT_TICK_TIMEOUT = 200;
 const DEFAULT_ELECTION_TIMEOUT = 5000;
 
 (function loop() {
-    var rand = Math.round(Math.random() * 100) + 100;
+    var rand = Math.floor(Math.random() * DEFAULT_TICK_TIMEOUT/2)+DEFAULT_TICK_TIMEOUT/2;
     setTimeout(function() {
         tick();
         status();
@@ -60,13 +62,19 @@ exports.whoami = function(port) {
 exports.write = function(key, val, callback) {
     if (status == me_leader) {
         if (!write_buffer) {
-            write_buffer = {key: key, val: val, term: current_term, tick: current_tick, callback: callback};
+            write_buffer = {
+                key: key,
+                val: val,
+                term: current_term,
+                tick: current_tick,
+                callback: callback
+            };
         } else {
             callback("Too busy");
         }
     } else {
-        console.log("Forwarding write request of "+key+" to leader "+current_leader+" for value "+val)
-        var url = httpurl(current_leader)+"/database/"+key+"/"+val;
+        console.log("Forwarding write request of " + key + " to leader " + current_leader + " for value " + val)
+        var url = httpurl(current_leader) + "/database/" + key + "/" + val;
         rest.post(url)
             .end(function(response) {
                 callback((response.statusCode != 201) ? "error" : null);
@@ -120,7 +128,11 @@ exports.handle_update_request = function(update, callback) {
     current_leader = update.from;
 
     if (update.data != null) {
-        data = {val: update.data.val, term: update.data.term, tick: update.data.tick}
+        data = {
+            val: update.data.val,
+            term: update.data.term,
+            tick: update.data.tick
+        }
         db.save(update.data.key, data, callback);
     } else {
         callback();
@@ -132,8 +144,11 @@ do_request_votes = function(term) {
     current_votes[term][myport] = myport;
 
     var votes = current_votes[term];
-    var majority = Math.floor(peers().length / 2) + 1;
+    var majority = Math.floor(p2p.peers().length / 2) + 1;
     async.parallel(create_vote_requests(votes), function(err) {
+        if (status != me_candidate) {
+            return;
+        }
         console.log('Election results:', votes);
         console.log('- %d vote received out of %d required for term %d', numberOf(votes), majority, term);
         if (numberOf(votes) < majority) {
@@ -158,10 +173,11 @@ create_vote_requests = function(votes) {
         term: current_term
     };
     var tasks = [];
-    peers().forEach(function(peer) {
-        tasks.push(function(callback) {
+    p2p.peers().forEach(function(peer) {
+        var task = function(callback) {
             var url = httpurl(peer.port) + "/raft/voteforme";
             rest.post(url)
+                .localAddress(p2p.localAddress())
                 .headers({
                     'Content-Type': 'application/json'
                 })
@@ -172,7 +188,8 @@ create_vote_requests = function(votes) {
                     }
                     callback(null);
                 });
-        })
+        }
+        tasks.push(timeout(task, DEFAULT_ELECTION_TIMEOUT, "timeout"));
     });
     return tasks;
 }
@@ -184,7 +201,11 @@ do_send_updates = function() {
     process.stdout.write('LEADER - updating for term=' + current_term + ', tick=' + current_tick + ', data=' + JSON.stringify(buffer) + '\r');
     async.parallel(create_updates(buffer), function(err) {
         if (buffer) {
-            data = {val: buffer.val, term: buffer.term, tick: buffer.tick};
+            data = {
+                val: buffer.val,
+                term: buffer.term,
+                tick: buffer.tick
+            };
             buffer.callback(null, data);
         }
     });
@@ -198,24 +219,20 @@ create_updates = function(buffer) {
         data: buffer
     };
     var tasks = [];
-    peers().forEach(function(peer) {
-        tasks.push(function(callback) {
+    p2p.peers().forEach(function(peer) {
+        var task = function(callback) {
             var url = httpurl(peer.port) + "/raft/update";
-            console.log(url);
             rest.post(url)
+                .localAddress(p2p.localAddress())
                 .headers({
                     'Content-Type': 'application/json'
                 })
                 .send(JSON.stringify(update))
                 .end(callback);
-        })
+        };
+        tasks.push(timeout(task, DEFAULT_ELECTION_TIMEOUT, "timeout"));
     });
     return tasks;
-}
-
-randomize = function(amount) {
-    var third = amount / 2;
-    return third + Math.floor(Math.random() * third * 2);
 }
 
 numberOf = function(votes) {
@@ -232,13 +249,17 @@ reset_election_timeout = function() {
     election_timeout = Date.now() + randomize(DEFAULT_ELECTION_TIMEOUT);
 }
 
+randomize = function(amount) {
+    var third = amount / 2;
+    return third + Math.floor(Math.random() * third * 2);
+}
 
 me_leader.to_s = '"leader"';
 me_follower.to_s = '"follower"';
 me_candidate.to_s = '"candidate"';
 
 switch_status = function(new_status) {
-    console.log("Switching from " + status.to_s + " to " + new_status.to_s+"\n");
+    console.log("Switching from " + status.to_s + " to " + new_status.to_s + "\n");
     status = new_status;
     reset_election_timeout();
 }
