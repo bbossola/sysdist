@@ -2,7 +2,7 @@ var clone = require('./clone.js').clone;
 
 var database = {}
 
-var wait_time = 500;
+var wait_time = 100;
 exports.slowness = function(amount) {
     wait_time = amount;
 }

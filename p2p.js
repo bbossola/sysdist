@@ -36,7 +36,9 @@ exports.init = function(localport) {
             })
         }
     }
+
     current_port = localport;
+    console.log("Expected peers:",peers.length)
 };
 
 exports.peers = function() {
