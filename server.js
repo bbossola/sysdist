@@ -3,13 +3,9 @@ var express = require("express");
 var p2p = require('./p2p.js');
 var api_store = require('./api_store.js');
 
-var mode = (process.env.MODE == undefined ? "CP" : process.env.MODE)
+var mode = (process.env.MODE == undefined ? "AC" : process.env.MODE)
 var port = (process.argv.length > 2) ? parseInt(process.argv[2], 10) : 3001
 p2p.init(port);
-
-// var request = require('unirest').request;
-// console.log('request', request);
-// console.log('request.options', request.options);
 
 var app = express();
 app.use(require('body-parser').json());
@@ -37,7 +33,7 @@ app.listen(port, host, function() {
     console.log("Service started on", host+":"+port);
 
     if (port == 3004 || port == 3006) {
-        require('./db.js').slowness(500);
+        require('./db.js').slowness(1000);
         console.log("...and I am slow!\n");
     } else {
         console.log("\n");

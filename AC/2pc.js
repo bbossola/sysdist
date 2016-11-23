@@ -1,8 +1,11 @@
+var timeout = require('async-timeout');
 var async = require('async');
 var rest = require('unirest');
 var http = require('http');
 
 var peers = require('../p2p.js').peers;
+
+const DEFAULT_TIMEOUT = 2000;
 
 exports.submit = function(key, val, callback) {
     var tx = {
@@ -33,7 +36,7 @@ exports.submit = function(key, val, callback) {
 create_tasks_propose = function(tx) {
     tasks = []
     peers().forEach(function(peer) {
-        tasks.push(function(callback) {
+        tasks.push(timeout(function(callback) {
             var url = "http://" + peer.host + ":" + peer.port + "/2pc/propose";
             console.log("Sending %s to url %s", url, JSON.stringify(tx))
             rest.post(url)
@@ -44,7 +47,7 @@ create_tasks_propose = function(tx) {
                 .end(function(response) {
                     callback(null, response.statusCode);
                 })
-        });
+        }, DEFAULT_TIMEOUT, "timeout"));
     });
     return tasks;
 }
@@ -52,12 +55,12 @@ create_tasks_propose = function(tx) {
 create_tasks_commit = function(tx) {
     tasks = []
     peers().forEach(function(peer) {
-        tasks.push(function(callback) {
+        tasks.push(timeout(function(callback) {
             var url = "http://" + peer.host + ":" + peer.port + "/2pc/commit/" + tx.id;
             rest.post(url).end(function(response) {
                 callback(null, response.statusCode);
             })
-        });
+        }, DEFAULT_TIMEOUT, "timeout"));
     });
     return tasks;
 }
@@ -65,12 +68,12 @@ create_tasks_commit = function(tx) {
 create_tasks_rollback = function(tx) {
     tasks = []
     peers().forEach(function(peer) {
-        tasks.push(function(callback) {
+        tasks.push(timeout(function(callback) {
             var url = "http://" + peer.host + ":" + peer.port + "/2pc/rollback/" + tx.id;
             rest.post(url).end(function(response) {
                 callback(null, 200);
             })
-        });
+        }, DEFAULT_TIMEOUT, "timeout"));
     });
     return tasks;
 }
