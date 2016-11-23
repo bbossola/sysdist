@@ -20,7 +20,7 @@ var election_timeout = 0;
 
 var write_buffer = undefined;
 
-const DEFAULT_ELECTION_TIMEOUT = 2500;
+const DEFAULT_ELECTION_TIMEOUT = 5000;
 
 (function loop() {
     var rand = Math.round(Math.random() * 100) + 100;
@@ -75,6 +75,11 @@ exports.write = function(key, val, callback) {
 }
 
 exports.handle_vote_request = function(from, term, callback) {
+    if (term < current_term) {
+        callback();
+        return;
+    }
+
     console.log("- vote request received for term ", term);
     reset_election_timeout();
 
@@ -196,6 +201,7 @@ create_updates = function(buffer) {
     peers().forEach(function(peer) {
         tasks.push(function(callback) {
             var url = httpurl(peer.port) + "/raft/update";
+            console.log(url);
             rest.post(url)
                 .headers({
                     'Content-Type': 'application/json'
@@ -208,8 +214,8 @@ create_updates = function(buffer) {
 }
 
 randomize = function(amount) {
-    var half = amount / 2;
-    return half + Math.floor(Math.random() * half);
+    var third = amount / 2;
+    return third + Math.floor(Math.random() * third * 2);
 }
 
 numberOf = function(votes) {
@@ -223,7 +229,7 @@ numberOf = function(votes) {
 }
 
 reset_election_timeout = function() {
-    election_timeout = Date.now() + DEFAULT_ELECTION_TIMEOUT;
+    election_timeout = Date.now() + randomize(DEFAULT_ELECTION_TIMEOUT);
 }
 
 
