@@ -1,5 +1,7 @@
 # sysdist
-The sample project containing the code for my NodeJS talk about distributed systems.
+The sample project containing the code for my NodeJS talk about distributed systems.  
+**Please note that this code is no more that a spike I wrote in around 4 days: be gentle with that, and do not run it in production!**  
+I will refactor it, tough, for the next speech :)
 
 # what does it do?
 What you have here is a process capable to implement some aspects of a key-value store (namely read and write) which does it using a distributed architecture. Following the CAP theorem it can use a CA approach (two-phase commit), an AP approach (sloppy quorums) or a CP approach (majority quorums). Based on the environment variable MODE it will select the operating mode.
