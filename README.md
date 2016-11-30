@@ -46,3 +46,6 @@ AC only - commits the existing transaction
 
 # Any hard requirements?
 Node 4+ please and Linux with iptables if you want to play with freeze!
+
+# Where are the slides?
+On [slideshare](http://www.slideshare.net/bbossola/distributed-programming) where you can also download them if you need to
