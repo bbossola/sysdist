@@ -168,7 +168,7 @@ get_agreed_result = function(responses) {
         disagreements = has_value;
         agreed_response = not_found[0];
     } else if (has_value.length >= read_quorum) {
-        disagreements = not_found;
+        disagreements = not_found.slice();
 
         var results = {};
         for (var response of has_value) {
@@ -191,7 +191,7 @@ get_agreed_result = function(responses) {
         if (num_of_results > 1) {
             if (agreed_response) {
                 console.log("We have a disagreement: " + num_of_results + " different results!");
-                delete results[response.body.val];
+                delete results[agreed_response.body.val];
                 Object.keys(results).forEach(function(key, index) {
                     disagreements.push(results[key].response);
                 });
