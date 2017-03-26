@@ -20,9 +20,9 @@ exports.vote_request = function(request, response) {
 exports.beat_request = function(request, response) {
     var update = request.body;
     if (update.data) {
-        console.log("Update: "+ JSON.stringify(update));
+        console.log("Beat ", JSON.stringify(update), "\n");
     } else {
-        process.stdout.write("Update: "+JSON.stringify(update)+"\r");
+        process.stdout.write("Beat "+JSON.stringify(update)+"\r");
     }
 
     raft.handle_beat_request(update, function(err) {
@@ -38,6 +38,3 @@ exports.get_history = function(request, response) {
             .end();
     });
 }
-
-
-
