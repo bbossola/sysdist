@@ -48,4 +48,8 @@ AC only - commits the existing transaction
 Node 4+ please and Linux with iptables if you want to play with freeze!
 
 # Where are the slides?
-On [slideshare](http://www.slideshare.net/bbossola/distributed-programming) where you can also download them if you need to
+On [slideshare](http://www.slideshare.net/bbossola/distributed-programming) where you can also download them if you need to.
+
+# Is there a recording of the speech?
+A recording in english can be found on [youtube](https://youtu.be/BGapHE8diwU) thanks to [Geecon](https://geecon.org).   
+A recording in italian is also available on [youtube](https://www.youtube.com/watch?v=Oo2nlUXIJGE) thanks to [Codemotion](https://codemotionworld.com).
