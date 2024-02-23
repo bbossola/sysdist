@@ -1,0 +1,15 @@
+name: vulnerability scan workflow
+
+on: push
+
+jobs:
+  meterian_scan:
+    name: Meterian client opensource scan
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Scan project with the Meterian client
+        uses: MeterianHQ/meterian-github-action@v1.0.17
+        with:
+            cli_args: "--oss" #[ Meterian CLI Options ]

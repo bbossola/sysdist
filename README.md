@@ -3,6 +3,9 @@ The sample project containing the code for my NodeJS talk about distributed syst
 **Please note that this code is no more that a spike I wrote in around 4 days: be gentle with that, and do not run it in production!**  
 I will refactor it, tough, for the next speech :)
 
+
+[![security status](https://qa.meterian.io/badge/pb/1e2b6a8c-02c0-49c8-8dbf-4cd5711ae703/security)](https://qa.meterian.io/projects/?pid=1e2b6a8c-02c0-49c8-8dbf-4cd5711ae703) [![stability status](https://qa.meterian.io/badge/pb/1e2b6a8c-02c0-49c8-8dbf-4cd5711ae703/stability)](https://qa.meterian.io/projects/?pid=1e2b6a8c-02c0-49c8-8dbf-4cd5711ae703) [![licensing status](https://qa.meterian.io/badge/pb/1e2b6a8c-02c0-49c8-8dbf-4cd5711ae703/licensing)](https://qa.meterian.io/projects/?pid=1e2b6a8c-02c0-49c8-8dbf-4cd5711ae703)
+
 # what does it do?
 What you have here is a process capable to implement some aspects of a key-value store (namely read and write) which does it using a distributed architecture. Following the CAP theorem it can use a CA approach (two-phase commit), an AP approach (sloppy quorums) or a CP approach (majority quorums). Based on the environment variable MODE it will select the operating mode.
 
